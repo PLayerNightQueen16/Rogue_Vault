@@ -75,7 +75,7 @@ const OrderSuccess = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050507] text-white pt-28 pb-16 flex flex-col justify-between">
+      <div className="min-h-full bg-transparent text-white pb-16 flex flex-col justify-between">
         <div className="max-w-3xl mx-auto px-4 w-full flex-grow flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-12 h-12 text-red-500 animate-spin" />
           <p className="text-base text-zinc-300 font-medium tracking-wide">
@@ -89,7 +89,7 @@ const OrderSuccess = () => {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-[#050507] text-white pt-28 pb-16 flex flex-col justify-between">
+      <div className="min-h-full bg-transparent text-white pb-16 flex flex-col justify-between">
         <div className="max-w-3xl mx-auto px-4 w-full flex-grow flex items-center justify-center">
           <div className="bg-red-950/40 border border-red-500/50 rounded-3xl p-8 sm:p-12 text-center max-w-xl w-full backdrop-blur-xl shadow-[0_0_40px_rgba(239,68,68,0.2)]">
             <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
@@ -126,7 +126,7 @@ const OrderSuccess = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white pt-28 pb-16 flex flex-col justify-between">
+    <div className="min-h-full bg-transparent text-white pb-16 flex flex-col justify-between">
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-grow">
         

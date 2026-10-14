@@ -120,7 +120,7 @@ function Home() {
 
       {/* Welcome Banner if User is Authenticated */}
       {user && (
-        <div className="pt-28 sm:pt-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-r from-red-950/40 via-[#10131d]/60 to-red-950/40 border border-red-500/30 rounded-2xl p-4 flex items-center justify-between shadow-[0_0_20px_rgba(239,68,68,0.15)]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/50 flex items-center justify-center text-red-400">

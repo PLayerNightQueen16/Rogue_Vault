@@ -12,20 +12,14 @@ import {
   Plus,
   Minus,
   CheckCircle2,
-  Package
+  Package,
+  Lock
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import Footer from '../components/Footer';
+import { CATEGORY_FALLBACKS } from '../constants/categories';
 
-const categoryFallbacks = {
-  electronics: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop&q=80',
-  fashion: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&auto=format&fit=crop&q=80',
-  accessories: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
-  home: 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?w=600&auto=format&fit=crop&q=80',
-  books: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop&q=80',
-  footwear: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-  default: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'
-};
+const categoryFallbacks = CATEGORY_FALLBACKS;
 
 function formatPriceRupees(price) {
   if (typeof price === 'number') {
@@ -43,6 +37,7 @@ const Cart = () => {
     cart,
     loading,
     error,
+    isAuthError,
     totalUnits,
     subtotal,
     updateQuantity,
@@ -89,7 +84,7 @@ const Cart = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white pt-28 pb-16 flex flex-col justify-between">
+    <div className="min-h-full bg-transparent text-white pb-16 flex flex-col justify-between">
       
       {/* Toast Error if any */}
       {actionError && (
@@ -121,7 +116,7 @@ const Cart = () => {
               </p>
             </div>
 
-            {!loading && !error && cart && cart.length > 0 && (
+            {!loading && !error && !isAuthError && cart && cart.length > 0 && (
               <div className="text-xs font-semibold text-zinc-300 bg-white/5 border border-white/10 px-4 py-2 rounded-full self-start sm:self-auto">
                 Total Units: <strong className="text-red-400">{totalUnits}</strong>
               </div>
@@ -139,20 +134,46 @@ const Cart = () => {
           </div>
         )}
 
-        {/* 2. ERROR STATE */}
-        {error && (!cart || cart.length === 0) && (
+        {/* 2. AUTHENTICATION REQUIRED OR ERROR STATE */}
+        {(error || isAuthError) && !loading && (
           <div className="bg-red-950/40 border border-red-500/50 rounded-3xl p-8 sm:p-12 text-center max-w-xl mx-auto my-12 shadow-[0_0_40px_rgba(239,68,68,0.2)] backdrop-blur-xl">
-            <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">Unable to load your cart.</h3>
-            <p className="text-xs sm:text-sm text-red-300 font-medium mb-6">
-              {error}
-            </p>
-            <button
-              onClick={() => fetchCart()}
-              className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(239,68,68,0.4)] cursor-pointer"
-            >
-              Try Again
-            </button>
+            {isAuthError ? (
+              <>
+                <Lock className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">Authentication Required</h3>
+                <p className="text-xs sm:text-sm text-zinc-300 mb-6">
+                  Please sign in to view and manage your shopping cart.
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <Link
+                    to="/login"
+                    className="px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white text-xs font-bold rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.5)] hover:brightness-110 transition-all"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold rounded-xl transition-all"
+                  >
+                    Create Account
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">Unable to load your cart.</h3>
+                <p className="text-xs sm:text-sm text-red-300 font-medium mb-6">
+                  {error}
+                </p>
+                <button
+                  onClick={() => fetchCart()}
+                  className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(239,68,68,0.4)] cursor-pointer"
+                >
+                  Try Again
+                </button>
+              </>
+            )}
           </div>
         )}
 

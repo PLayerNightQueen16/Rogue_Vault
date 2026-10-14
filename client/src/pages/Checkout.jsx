@@ -17,16 +17,9 @@ import {
 import { useCart } from '../context/CartContext';
 import { createPaymentOrderApi, verifyPaymentApi } from '../services/api';
 import Footer from '../components/Footer';
+import { CATEGORY_FALLBACKS } from '../constants/categories';
 
-const categoryFallbacks = {
-  electronics: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop&q=80',
-  fashion: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&auto=format&fit=crop&q=80',
-  accessories: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
-  home: 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?w=600&auto=format&fit=crop&q=80',
-  books: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop&q=80',
-  footwear: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-  default: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'
-};
+const categoryFallbacks = CATEGORY_FALLBACKS;
 
 function formatPriceRupees(price) {
   if (typeof price === 'number') {
@@ -227,7 +220,7 @@ const Checkout = () => {
   // If cart is empty
   if (!cartLoading && (!cart || cart.length === 0)) {
     return (
-      <div className="min-h-screen bg-[#050507] text-white pt-28 pb-16 flex flex-col justify-between">
+      <div className="min-h-full bg-transparent text-white pb-16 flex flex-col justify-between">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-grow flex items-center justify-center">
           <div className="text-center py-20 bg-[#0d0f17]/90 border border-red-950/40 rounded-3xl p-8 sm:p-12 max-w-lg mx-auto backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
             <ShoppingBag className="w-14 h-14 text-red-400 mx-auto mb-4" />
@@ -251,7 +244,7 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white pt-28 pb-16 flex flex-col justify-between">
+    <div className="min-h-full bg-transparent text-white pb-16 flex flex-col justify-between">
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-grow">
         
@@ -264,7 +257,7 @@ const Checkout = () => {
             <ArrowLeft className="w-4 h-4 text-red-400" />
             <span>Back to Cart</span>
           </Link>
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-400">
             <span className="text-zinc-500">Cart</span>
             <span>&gt;</span>
             <span className="text-red-400 font-bold">Checkout</span>
@@ -299,8 +292,8 @@ const Checkout = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Column: Shipping Form */}
-          <div className="lg:col-span-7 bg-[#0d0f17]/90 border border-red-950/50 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
+          {/* Left Column: Shipping Form — shown second on mobile, first on desktop */}
+          <div className="lg:col-span-7 order-2 lg:order-1 bg-[#0d0f17]/90 border border-red-950/50 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 pb-4 mb-6 border-b border-zinc-800">
               <Truck className="w-5 h-5 text-red-400" />
               <h2 className="text-base sm:text-lg font-bold text-white font-['Cinzel',serif] uppercase tracking-wide">
@@ -471,8 +464,8 @@ const Checkout = () => {
             </form>
           </div>
 
-          {/* Right Column: Order Summary with Items Snapshot */}
-          <div className="lg:col-span-5 bg-[#0d0f17]/95 border border-red-950/60 rounded-3xl p-6 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.7)] sticky top-28 space-y-6">
+          {/* Right Column: Order Summary — shown first on mobile */}
+          <div className="lg:col-span-5 order-1 lg:order-2 bg-[#0d0f17]/95 border border-red-950/60 rounded-3xl p-6 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.7)] lg:sticky lg:top-28 space-y-6">
             <h2 className="text-base font-bold text-white font-['Cinzel',serif] uppercase tracking-wide pb-3 border-b border-zinc-800">
               Order Review ({totalUnits} Items)
             </h2>

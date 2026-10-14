@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { axiosInstance } from '../axiosCalls/axios';
 import Logo from '../components/Logo';
 import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const { addToCart, fetchCart } = useCart();
 
   const navigate = useNavigate();
 
@@ -29,6 +31,26 @@ function Login() {
     try {
       await axiosInstance.post('/customers/login', form);
       setForm({ email: '', password: '' });
+
+      // Load authenticated cart
+      await fetchCart();
+
+      // Check if user had an intended add to cart action preserved
+      const pendingRaw = sessionStorage.getItem('rouge_pending_cart_item');
+      if (pendingRaw) {
+        sessionStorage.removeItem('rouge_pending_cart_item');
+        try {
+          const pending = JSON.parse(pendingRaw);
+          if (pending && pending.productId) {
+            await addToCart(pending.product || pending.productId, pending.quantity || 1);
+            navigate(pending.returnUrl || '/cart');
+            return;
+          }
+        } catch (pendingErr) {
+          console.warn('Failed to resume pending cart action:', pendingErr);
+        }
+      }
+
       navigate('/');
       console.log('User LoggedIn Successfully!!');
     } catch (error) {
@@ -40,7 +62,7 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-5 relative overflow-hidden font-['Outfit',sans-serif]">
+    <div className="min-h-full flex items-center justify-center p-5 pb-16 relative overflow-hidden font-['Outfit',sans-serif]">
       {/* Ambient Glows */}
       <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-red-600/15 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-rose-600/10 rounded-full blur-[140px] pointer-events-none" />

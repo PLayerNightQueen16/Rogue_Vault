@@ -14,16 +14,9 @@ import {
 } from 'lucide-react';
 import { fetchWishlist, removeFromWishlist } from '../services/api';
 import Footer from '../components/Footer';
+import { CATEGORY_FALLBACKS } from '../constants/categories';
 
-const categoryFallbacks = {
-  electronics: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop&q=80',
-  fashion: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&auto=format&fit=crop&q=80',
-  accessories: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
-  home: 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?w=600&auto=format&fit=crop&q=80',
-  books: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop&q=80',
-  footwear: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-  default: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'
-};
+const categoryFallbacks = CATEGORY_FALLBACKS;
 
 function formatPriceRupees(price) {
   if (typeof price === 'number') {
@@ -105,7 +98,7 @@ const Wishlist = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white pt-28 pb-16 flex flex-col justify-between">
+    <div className="min-h-full bg-transparent text-white pb-16 flex flex-col justify-between">
       
       {/* Toast Notification */}
       {toastMessage && (

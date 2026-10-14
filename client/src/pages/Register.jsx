@@ -45,7 +45,7 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-5 relative overflow-hidden font-['Outfit',sans-serif]">
+    <div className="min-h-full flex items-center justify-center p-5 pb-16 relative overflow-hidden font-['Outfit',sans-serif]">
       {/* Ambient Glows */}
       <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-red-600/15 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-rose-600/10 rounded-full blur-[140px] pointer-events-none" />

@@ -1,24 +1,19 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo, useState } from 'react';
 import {
   fetchCart,
   addToCartApi,
   updateCartQuantityApi,
   removeFromCartApi
 } from '../services/api';
+import AuthRequiredModal from '../components/AuthRequiredModal';
 
 const CART_STORAGE_KEY = 'shopkart_cart_cache';
 
 const initialState = {
-  items: (() => {
-    try {
-      const saved = localStorage.getItem(CART_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  })(),
+  items: [],
   loading: false,
-  error: null
+  error: null,
+  isAuthError: false
 };
 
 const cartReducer = (state, action) => {
@@ -26,13 +21,15 @@ const cartReducer = (state, action) => {
     case 'FETCH_START':
       return { ...state, loading: true, error: null };
     case 'FETCH_SUCCESS':
-      return { ...state, loading: false, items: action.payload, error: null };
+      return { ...state, loading: false, items: action.payload, error: null, isAuthError: false };
     case 'FETCH_FAILURE':
-      return { ...state, loading: false, error: action.payload };
+      return { ...state, loading: false, error: action.payload, isAuthError: false };
+    case 'AUTH_ERROR':
+      return { ...state, loading: false, items: [], error: action.payload, isAuthError: true };
     case 'SET_ITEMS':
-      return { ...state, items: action.payload, error: null };
+      return { ...state, items: action.payload, error: null, isAuthError: false };
     case 'CLEAR_CART':
-      return { ...state, items: [], loading: false, error: null };
+      return { ...state, items: [], loading: false, error: null, isAuthError: false };
     default:
       return state;
   }
@@ -42,15 +39,33 @@ const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const [authModal, setAuthModal] = useState({
+    isOpen: false,
+    message: ''
+  });
 
-  // Sync to localStorage whenever items change
+  // Clean up any stale unauthenticated guest cache on initialization
   useEffect(() => {
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
+      localStorage.removeItem(CART_STORAGE_KEY);
     } catch (e) {
-      console.error('Failed to persist cart to localStorage', e);
+      // ignore
     }
-  }, [state.items]);
+  }, []);
+
+  const openAuthPrompt = useCallback((message = 'Please log in to your account to add items to your shopping cart.') => {
+    setAuthModal({
+      isOpen: true,
+      message
+    });
+  }, []);
+
+  const closeAuthPrompt = useCallback(() => {
+    setAuthModal({
+      isOpen: false,
+      message: ''
+    });
+  }, []);
 
   // Fetch cart from backend
   const loadCart = useCallback(async () => {
@@ -63,9 +78,11 @@ export const CartProvider = ({ children }) => {
         dispatch({ type: 'FETCH_SUCCESS', payload: [] });
       }
     } catch (err) {
-      // If 401 unauthenticated, keep local empty or cached without hard error
       if (err?.response?.status === 401) {
-        dispatch({ type: 'FETCH_SUCCESS', payload: [] });
+        dispatch({
+          type: 'AUTH_ERROR',
+          payload: 'Please sign in to view and manage your shopping cart.'
+        });
       } else {
         dispatch({
           type: 'FETCH_FAILURE',
@@ -80,10 +97,17 @@ export const CartProvider = ({ children }) => {
     loadCart();
   }, [loadCart]);
 
-  // Add product to cart
-  const addToCart = useCallback(async (productId) => {
+  // Add product to cart with backend authentication enforcement
+  const addToCart = useCallback(async (productOrId, quantity = 1) => {
+    const isObject = typeof productOrId === 'object' && productOrId !== null;
+    const productId = isObject ? (productOrId._id || productOrId.id) : productOrId;
+
+    if (!productId) {
+      throw new Error('Product ID is required');
+    }
+
     try {
-      const data = await addToCartApi(productId);
+      const data = await addToCartApi(productId, quantity);
       if (data && Array.isArray(data.cart)) {
         dispatch({ type: 'SET_ITEMS', payload: data.cart });
         return data;
@@ -91,10 +115,40 @@ export const CartProvider = ({ children }) => {
       await loadCart();
       return data;
     } catch (err) {
-      const errMsg = err?.response?.data?.message || 'Failed to add product to cart';
-      throw new Error(errMsg);
+      if (err?.response?.status === 401) {
+        // Mark auth error in state
+        dispatch({
+          type: 'AUTH_ERROR',
+          payload: 'Please sign in to add items to your shopping cart.'
+        });
+
+        // Preserve intended action so user can optionally complete after logging in
+        try {
+          sessionStorage.setItem('rouge_pending_cart_item', JSON.stringify({
+            productId,
+            product: isObject ? productOrId : null,
+            quantity: quantity || 1,
+            returnUrl: window.location.pathname + window.location.search
+          }));
+        } catch (storageErr) {
+          console.warn('Failed to store pending cart item:', storageErr);
+        }
+
+        // Trigger authentication-required prompt consistent with Wishlist design
+        openAuthPrompt('Please log in to your account to add items to your shopping cart.');
+
+        const authError = new Error('Please log in to add items to your cart.');
+        authError.isAuth = true;
+        authError.status = 401;
+        throw authError;
+      }
+
+      // Non-auth error (e.g. stock limit, server error)
+      const errorMessage = err?.response?.data?.message || err.message || 'Failed to add item to cart.';
+      dispatch({ type: 'FETCH_FAILURE', payload: errorMessage });
+      throw new Error(errorMessage);
     }
-  }, [loadCart]);
+  }, [loadCart, openAuthPrompt]);
 
   // Update item quantity
   const updateQuantity = useCallback(async (productId, quantity) => {
@@ -107,10 +161,21 @@ export const CartProvider = ({ children }) => {
       await loadCart();
       return data;
     } catch (err) {
-      const errMsg = err?.response?.data?.message || 'Failed to update item quantity';
-      throw new Error(errMsg);
+      if (err?.response?.status === 401) {
+        dispatch({
+          type: 'AUTH_ERROR',
+          payload: 'Please sign in to manage your shopping cart.'
+        });
+        openAuthPrompt('Please log in to your account to manage your shopping cart.');
+        const authError = new Error('Authentication required');
+        authError.isAuth = true;
+        authError.status = 401;
+        throw authError;
+      }
+      const errorMessage = err?.response?.data?.message || err.message || 'Failed to update quantity.';
+      throw new Error(errorMessage);
     }
-  }, [loadCart]);
+  }, [loadCart, openAuthPrompt]);
 
   // Remove item from cart
   const removeFromCart = useCallback(async (productId) => {
@@ -123,15 +188,27 @@ export const CartProvider = ({ children }) => {
       await loadCart();
       return data;
     } catch (err) {
-      const errMsg = err?.response?.data?.message || 'Failed to remove item from cart';
-      throw new Error(errMsg);
+      if (err?.response?.status === 401) {
+        dispatch({
+          type: 'AUTH_ERROR',
+          payload: 'Please sign in to manage your shopping cart.'
+        });
+        openAuthPrompt('Please log in to your account to manage your shopping cart.');
+        const authError = new Error('Authentication required');
+        authError.isAuth = true;
+        authError.status = 401;
+        throw authError;
+      }
+      const errorMessage = err?.response?.data?.message || err.message || 'Failed to remove item from cart.';
+      throw new Error(errorMessage);
     }
-  }, [loadCart]);
+  }, [loadCart, openAuthPrompt]);
 
-  // Clear cart on backend confirmation
+  // Clear cart on backend confirmation or logout
   const clearCart = useCallback(() => {
     try {
       localStorage.removeItem(CART_STORAGE_KEY);
+      sessionStorage.removeItem('rouge_pending_cart_item');
     } catch (e) {
       console.error(e);
     }
@@ -156,18 +233,31 @@ export const CartProvider = ({ children }) => {
       cart: state.items,
       loading: state.loading,
       error: state.error,
+      isAuthError: state.isAuthError,
+      authPromptOpen: authModal.isOpen,
       totalUnits,
       subtotal,
       addToCart,
       updateQuantity,
       removeFromCart,
       clearCart,
-      fetchCart: loadCart
+      fetchCart: loadCart,
+      openAuthPrompt,
+      closeAuthPrompt
     }),
-    [state.items, state.loading, state.error, totalUnits, subtotal, addToCart, updateQuantity, removeFromCart, clearCart, loadCart]
+    [state.items, state.loading, state.error, state.isAuthError, authModal.isOpen, totalUnits, subtotal, addToCart, updateQuantity, removeFromCart, clearCart, loadCart, openAuthPrompt, closeAuthPrompt]
   );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+      <AuthRequiredModal
+        isOpen={authModal.isOpen}
+        message={authModal.message}
+        onClose={closeAuthPrompt}
+      />
+    </CartContext.Provider>
+  );
 };
 
 export const useCart = () => {

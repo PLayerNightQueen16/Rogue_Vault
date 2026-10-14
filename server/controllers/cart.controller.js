@@ -28,15 +28,54 @@ export const addToCart = async (req, res) => {
     const { productId } = req.params;
 
     // 1. Validate productId
-    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+    if (!productId) {
       return res.status(400).json({
         success: false,
-        message: "Invalid product ID"
+        message: "Product ID is required"
       });
     }
 
-    // 2. Find Product
-    const product = await Product.findById(productId);
+    // 2. Find Product by ObjectId or DummyJSON numeric ID
+    let product = null;
+    if (mongoose.Types.ObjectId.isValid(productId) && productId.length === 24) {
+      product = await Product.findById(productId);
+    }
+
+    if (!product) {
+      // Try to treat productId as a DummyJSON numeric id
+      const numericId = parseInt(productId, 10);
+      const isDummyNumericId = !isNaN(numericId) && numericId > 0 && String(numericId) === String(productId);
+
+      if (isDummyNumericId) {
+        try {
+          const dummyRes = await fetch(`https://dummyjson.com/products/${numericId}`);
+          if (dummyRes.ok) {
+            const dummyData = await dummyRes.json();
+            if (dummyData && dummyData.id) {
+              // Upsert by dummyId — stable identifier, never matched by name
+              product = await Product.findOneAndUpdate(
+                { dummyId: dummyData.id },
+                {
+                  $setOnInsert: {
+                    dummyId: dummyData.id,
+                    name: dummyData.title || `Product ${numericId}`,
+                    description: dummyData.description || 'Vault Exclusive Product',
+                    price: typeof dummyData.price === 'number' ? dummyData.price : 1999,
+                    category: (dummyData.category || 'general').toLowerCase(),
+                    image: dummyData.thumbnail || (Array.isArray(dummyData.images) && dummyData.images[0]) || '',
+                    stock: typeof dummyData.stock === 'number' ? dummyData.stock : 45
+                  }
+                },
+                { upsert: true, new: true }
+              );
+            }
+          }
+        } catch (dummyErr) {
+          console.warn("DummyJSON fetch in addToCart failed:", dummyErr.message);
+        }
+      }
+    }
+
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -58,12 +97,16 @@ export const addToCart = async (req, res) => {
     }
 
     const existingItemIndex = customer.cart.findIndex(
-      (item) => item.product && item.product.toString() === productId
+      (item) => item.product && item.product.toString() === product._id.toString()
     );
 
-    let newQuantity = 1;
+    const addedQty = typeof req.body?.quantity === "number" && Number.isInteger(req.body.quantity) && req.body.quantity > 0
+      ? req.body.quantity
+      : 1;
+
+    let newQuantity = addedQty;
     if (existingItemIndex > -1) {
-      newQuantity = customer.cart[existingItemIndex].quantity + 1;
+      newQuantity = customer.cart[existingItemIndex].quantity + addedQty;
     }
 
     // 4. Validate stock limit
@@ -78,8 +121,8 @@ export const addToCart = async (req, res) => {
       customer.cart[existingItemIndex].quantity = newQuantity;
     } else {
       customer.cart.push({
-        product: productId,
-        quantity: 1
+        product: product._id,
+        quantity: addedQty
       });
     }
 
@@ -133,10 +176,10 @@ export const updateCartQuantity = async (req, res) => {
     const { quantity } = req.body;
 
     // 1. Validate input
-    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+    if (!productId) {
       return res.status(400).json({
         success: false,
-        message: "Invalid product ID"
+        message: "Product ID is required"
       });
     }
 
@@ -151,16 +194,7 @@ export const updateCartQuantity = async (req, res) => {
       });
     }
 
-    // 2. Find Product
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found"
-      });
-    }
-
-    // 3. Find Customer
+    // 2. Find Customer
     const customer = await Customer.findById(req.customer._id);
     if (!customer) {
       return res.status(404).json({
@@ -174,7 +208,7 @@ export const updateCartQuantity = async (req, res) => {
     }
 
     const itemIndex = customer.cart.findIndex(
-      (item) => item.product && item.product.toString() === productId
+      (item) => item.product && (item.product.toString() === productId || item._id.toString() === productId)
     );
 
     if (itemIndex === -1) {
@@ -184,8 +218,11 @@ export const updateCartQuantity = async (req, res) => {
       });
     }
 
-    // 4. Validate stock
-    if (quantity > product.stock) {
+    const cartItem = customer.cart[itemIndex];
+    const product = await Product.findById(cartItem.product);
+
+    // 3. Validate stock if product exists
+    if (product && quantity > product.stock) {
       return res.status(400).json({
         success: false,
         message: `Quantity exceeds available stock (${product.stock})`
@@ -217,10 +254,10 @@ export const removeFromCart = async (req, res) => {
     const { productId } = req.params;
 
     // 1. Validate productId
-    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+    if (!productId) {
       return res.status(400).json({
         success: false,
-        message: "Invalid product ID"
+        message: "Product ID is required"
       });
     }
 
@@ -238,7 +275,7 @@ export const removeFromCart = async (req, res) => {
     }
 
     const itemExists = customer.cart.some(
-      (item) => item.product && item.product.toString() === productId
+      (item) => item.product && (item.product.toString() === productId || item._id.toString() === productId)
     );
 
     if (!itemExists) {
@@ -249,7 +286,7 @@ export const removeFromCart = async (req, res) => {
     }
 
     customer.cart = customer.cart.filter(
-      (item) => item.product && item.product.toString() !== productId
+      (item) => item.product && (item.product.toString() !== productId && item._id.toString() !== productId)
     );
 
     await customer.save();

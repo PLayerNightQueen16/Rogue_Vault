@@ -1,7 +1,7 @@
 import Customer from "../models/customer.model.js";
-import Product from "../models/product.model.js";
 import { genToken } from "../utils/generateToken.js";
 import bcrypt from 'bcrypt';
+
 
 
 const cookiesOptions = {
@@ -45,14 +45,21 @@ export const registerCustomer = async (req, res) => {
             phone
         })
 
-        await newCustomer.save()
-
-
         //Creating a JWT Access Token
         const token = genToken(newCustomer._id)
         res.cookie("token", token, cookiesOptions)
 
-        return res.status(200).json({ success: true, message: "Customer Registered Successfully!!", customer: newCustomer })
+        // Return only safe public fields — never expose the hashed password
+        return res.status(200).json({
+            success: true,
+            message: "Customer Registered Successfully!!",
+            customer: {
+                _id: newCustomer._id,
+                fullName: newCustomer.fullName,
+                email: newCustomer.email,
+                phone: newCustomer.phone
+            }
+        })
 
 
     } catch (error) {
@@ -102,7 +109,9 @@ export const getUser = async (req, res) => {
 //Logout the Customer...
 export const logoutCustomer = async (req, res) => {
     try {
-        res.clearCookie("token")
+        // Pass same options used when setting the cookie so browsers clear it correctly
+        // (important for production where sameSite:'none' and secure:true are required)
+        res.clearCookie("token", cookiesOptions)
         return res.status(200).json({ success: true, message: "Logged out successfully!" })
 
     } catch (error) {

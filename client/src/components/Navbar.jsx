@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Heart, ShoppingBag, User, LogOut, Menu, X, Sparkles, Package } from 'lucide-react';
+import { Search, Heart, ShoppingBag, User, LogOut, Menu, X, Sparkles, Package, ChevronDown } from 'lucide-react';
 import Logo from './Logo';
 import { axiosInstance } from '../axiosCalls/axios';
 import { fetchWishlist } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { CATEGORY_GROUPS, CATEGORY_ICONS } from '../constants/categories';
 
 function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
   const { totalUnits, clearCart, fetchCart: syncCart } = useCart();
@@ -12,6 +13,7 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [wishlistCount, setWishlistCount] = useState(initialWishlistCount);
   const location = useLocation();
@@ -111,7 +113,7 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
     { name: totalUnits > 0 ? `Cart (${totalUnits})` : 'Cart', path: '/cart' },
     ...(currentUser ? [{ name: 'Orders', path: '/orders' }] : []),
     { name: 'Categories', path: '/#categories' },
-    { name: 'Deals', path: '/#deals' }
+    { name: 'Deals', path: '/deals' }
   ];
 
   return (
@@ -131,6 +133,55 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
             {navLinks.map((link) => {
+              if (link.name === 'Categories') {
+                return (
+                  <div
+                    key="Categories"
+                    className="relative"
+                    onMouseEnter={() => setCategoryDropdownOpen(true)}
+                    onMouseLeave={() => setCategoryDropdownOpen(false)}
+                  >
+                    <Link
+                      to={link.path}
+                      onClick={() => setCategoryDropdownOpen(false)}
+                      className="relative px-3.5 py-1.5 text-sm font-medium transition-all duration-200 rounded-lg group text-zinc-300 hover:text-white flex items-center gap-1"
+                    >
+                      <span className="relative z-10">{link.name}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 text-zinc-400 ${categoryDropdownOpen ? 'rotate-180 text-red-400' : ''}`} />
+                      <span className="absolute inset-0 rounded-lg bg-red-950/0 group-hover:bg-red-950/25 transition-colors -z-0" />
+                    </Link>
+
+                    {/* Category Dropdown Menu */}
+                    {categoryDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-1 w-56 bg-[#0e1017]/95 border border-red-900/50 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.9)] p-2 z-50 backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-150">
+                        <div className="px-3 py-1.5 border-b border-zinc-800/80 mb-1 flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">
+                            Main Categories
+                          </span>
+                          <span className="text-[10px] text-zinc-500">{Object.keys(CATEGORY_GROUPS).length} Vault Groups</span>
+                        </div>
+                        {Object.keys(CATEGORY_GROUPS).map((groupName) => {
+                          const Icon = CATEGORY_ICONS[groupName];
+                          return (
+                            <Link
+                              key={groupName}
+                              to={`/products?category=${encodeURIComponent(groupName)}`}
+                              onClick={() => setCategoryDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white hover:bg-red-950/40 transition-colors group/item"
+                            >
+                              <div className="w-6 h-6 rounded-lg bg-zinc-900/80 border border-zinc-800 flex items-center justify-center text-red-400 group-hover/item:border-red-500/60 group-hover/item:bg-red-600/20 transition-all">
+                                {Icon && <Icon size={14} />}
+                              </div>
+                              <span>{groupName}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               const isActive = location.pathname === link.path && !location.hash;
               return (
                 <Link
@@ -324,16 +375,54 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                 <Search className="w-3.5 h-3.5" />
               </button>
             </form>
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-red-950/30 transition-colors"
-              >
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              if (link.name === 'Categories') {
+                return (
+                  <div key="mobile-categories" className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-red-950/30 transition-colors"
+                    >
+                      <span>Categories</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform text-zinc-400 ${categoryDropdownOpen ? 'rotate-180 text-red-400' : ''}`} />
+                    </button>
+                    {categoryDropdownOpen && (
+                      <div className="pl-3 pr-2 py-1 space-y-1 bg-black/40 rounded-xl border border-red-950/40">
+                        {Object.keys(CATEGORY_GROUPS).map((groupName) => {
+                          const Icon = CATEGORY_ICONS[groupName];
+                          return (
+                            <Link
+                              key={groupName}
+                              to={`/products?category=${encodeURIComponent(groupName)}`}
+                              onClick={() => {
+                                setMobileMenuOpen(false);
+                                setCategoryDropdownOpen(false);
+                              }}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-red-950/40 transition-colors"
+                            >
+                              {Icon && <Icon size={14} className="text-red-400" />}
+                              <span>{groupName}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-red-950/30 transition-colors"
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
           </div>
         )}
 

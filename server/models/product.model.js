@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
+    // Stable DummyJSON numeric product ID (null for MongoDB-native products)
+    dummyId: {
+        type: Number,
+        default: null,
+        sparse: true  // allows multiple null values while enforcing uniqueness on non-null values
+    },
     name: {
         type: String,
         required: true

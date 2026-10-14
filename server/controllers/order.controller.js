@@ -7,8 +7,8 @@ import Product from "../models/product.model.js";
 
 // Helper to get Razorpay instance
 const getRazorpayInstance = () => {
-  const key_id = process.env.RAZORPAY_KEY_ID || process.env.razorpay_id;
-  const key_secret = process.env.RAZORPAY_KEY_SECRET || process.env.razorpay_secret;
+  const key_id = process.env.razorpay_id;
+  const key_secret = process.env.razorpay_secret;
 
   if (!key_id || !key_secret) {
     throw new Error("Razorpay credentials not configured in environment");

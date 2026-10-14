@@ -4,7 +4,7 @@ import heroBanner from '../assets/hero_banner.jpg';
 
 function HeroSection() {
   return (
-    <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
+    <section className="relative pt-4 sm:pt-6 md:pt-8 pb-16 md:pb-24 overflow-hidden">
       {/* Ambient Red Lighting Effects */}
       <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-red-600/15 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse" style={{ animationDuration: '7s' }} />
       <div className="absolute -bottom-20 left-10 w-96 h-96 bg-rose-700/10 rounded-full blur-[120px] pointer-events-none -z-10" />

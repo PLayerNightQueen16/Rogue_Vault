@@ -74,7 +74,7 @@ const Orders = () => {
   }, [loadOrders]);
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white pt-28 pb-16 flex flex-col justify-between">
+    <div className="min-h-full bg-transparent text-white pb-16 flex flex-col justify-between">
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-grow">
         
@@ -226,7 +226,7 @@ const Orders = () => {
                   </div>
 
                   {/* Order Items Grid / List */}
-                  <div className="py-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="py-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {(order.items || []).map((item, idx) => {
                       const fallbackImg = categoryFallbacks.default;
                       const itemPrice = typeof item.price === 'number' ? item.price : 0;

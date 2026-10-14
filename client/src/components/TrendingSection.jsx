@@ -2,16 +2,8 @@ import React, { useState } from 'react';
 import { ArrowRight, Sparkles, AlertCircle, ShoppingBag, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
-
-const categoryFallbacks = {
-  electronics: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop&q=80',
-  fashion: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&auto=format&fit=crop&q=80',
-  accessories: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
-  home: 'https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?w=600&auto=format&fit=crop&q=80',
-  books: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop&q=80',
-  footwear: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-  default: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'
-};
+import { formatCategoryName, CATEGORY_FALLBACKS } from '../constants/categories';
+import { useCart } from '../context/CartContext';
 
 function formatPriceRupees(price) {
   if (typeof price === 'number') {
@@ -25,6 +17,7 @@ function formatPriceRupees(price) {
 }
 
 function TrendingSection({ products = [], loading = false, error = '', onAddToCart, activeCategory = 'all', wishlistIds = new Set() }) {
+  const { addToCart } = useCart();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalImgSrc, setModalImgSrc] = useState('');
 
@@ -35,8 +28,10 @@ function TrendingSection({ products = [], loading = false, error = '', onAddToCa
 
   const getFallback = (cat) => {
     const k = cat ? cat.toLowerCase() : 'default';
-    return categoryFallbacks[k] || categoryFallbacks.default;
+    return CATEGORY_FALLBACKS[k] || CATEGORY_FALLBACKS.default;
   };
+
+  const categoryTitle = formatCategoryName(activeCategory);
 
   return (
     <section id="trending" className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,11 +42,11 @@ function TrendingSection({ products = [], loading = false, error = '', onAddToCa
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
             <span className="text-xs uppercase font-bold tracking-[0.2em] text-red-400">
-              {activeCategory !== 'all' ? `${activeCategory} Collection` : 'Live Vault Inventory'}
+              {activeCategory !== 'all' ? `${categoryTitle} Collection` : 'Live Vault Inventory'}
             </span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-['Cinzel',serif] font-bold text-white tracking-wide">
-            {activeCategory !== 'all' ? `${activeCategory.toUpperCase()} PRODUCTS` : 'Trending Now'}
+            {activeCategory !== 'all' ? `${categoryTitle.toUpperCase()} PRODUCTS` : 'Trending Now'}
           </h2>
         </div>
 
@@ -178,9 +173,16 @@ function TrendingSection({ products = [], loading = false, error = '', onAddToCa
                     <span>View Details</span>
                   </Link>
                   <button
-                    onClick={() => {
-                      onAddToCart && onAddToCart(selectedProduct);
-                      setSelectedProduct(null);
+                    onClick={async () => {
+                      try {
+                        await addToCart(selectedProduct);
+                        if (onAddToCart) onAddToCart(selectedProduct);
+                        setSelectedProduct(null);
+                      } catch (err) {
+                        if (err?.isAuth || err?.response?.status === 401 || err?.status === 401) {
+                          setSelectedProduct(null);
+                        }
+                      }
                     }}
                     className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all cursor-pointer"
                   >

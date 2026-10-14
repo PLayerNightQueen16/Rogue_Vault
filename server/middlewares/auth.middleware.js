@@ -11,10 +11,9 @@ try {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     const customer = await Customer.findById(decoded.customerId)
-    console.log(decoded)
 
     if (!customer) {
-        return res.status(404).json({ message: "Invalid Token...Customer Not Found!" })
+        return res.status(401).json({ message: "Invalid Token...Customer Not Found!" })
     }
 
    req.customer = customer                                                                                                  

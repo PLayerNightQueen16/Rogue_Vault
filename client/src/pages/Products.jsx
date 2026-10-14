@@ -4,15 +4,15 @@ import { Search, Filter, Sparkles, SlidersHorizontal, ArrowUpDown, X, Loader2, S
 import { fetchProducts, fetchWishlist } from "../services/api";
 import ProductCard from "../components/ProductCard";
 import Footer from "../components/Footer";
+import {
+  CATEGORY_ITEMS,
+  CATEGORY_ICONS,
+  CATEGORY_GROUPS,
+  formatCategoryName,
+  getMainCategory
+} from "../constants/categories";
 
-const CATEGORIES = [
-  { id: 'all', label: 'All Products' },
-  { id: 'Electronics', label: 'Electronics' },
-  { id: 'Fashion', label: 'Fashion' },
-  { id: 'Accessories', label: 'Accessories' },
-  { id: 'Home', label: 'Home & Living' },
-  { id: 'Books', label: 'Books' }
-];
+const CATEGORIES = CATEGORY_ITEMS;
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -27,6 +27,8 @@ const Products = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [toastMessage, setToastMessage] = useState(null);
+
+  const activeMainCategory = getMainCategory(selectedCategory);
 
   // Sync wishlist items from server
   const loadUserWishlist = useCallback(async () => {
@@ -167,7 +169,7 @@ const Products = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white pt-28 pb-16 flex flex-col justify-between">
+    <div className="min-h-full bg-transparent text-white pb-16 flex flex-col justify-between">
       
       {/* Toast Notification */}
       {toastMessage && (
@@ -237,8 +239,34 @@ const Products = () => {
               )}
             </div>
 
-            {/* Sort Dropdown */}
+            {/* Category Dropdown Selector */}
             <div className="relative w-full md:w-56 shrink-0">
+              <div className="flex items-center bg-[#141722]/80 border border-red-950/60 rounded-xl px-3 py-1.5">
+                <Filter className="w-4 h-4 text-red-400 shrink-0 mr-2" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => handleCategorySelect(e.target.value)}
+                  className="w-full bg-transparent text-xs text-zinc-200 py-1.5 focus:outline-none cursor-pointer"
+                >
+                  <option value="all" className="bg-[#12141e] text-white">All Categories</option>
+                  {Object.keys(CATEGORY_GROUPS).map((groupName) => (
+                    <optgroup key={groupName} label={groupName} className="bg-[#12141e] text-red-400 font-bold">
+                      <option value={groupName} className="bg-[#12141e] text-white">
+                        All {groupName}
+                      </option>
+                      {CATEGORY_GROUPS[groupName].map((subSlug) => (
+                        <option key={subSlug} value={subSlug} className="bg-[#12141e] text-zinc-300">
+                          &nbsp;&nbsp;{subSlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="relative w-full md:w-52 shrink-0">
               <div className="flex items-center bg-[#141722]/80 border border-red-950/60 rounded-xl px-3 py-1.5">
                 <ArrowUpDown className="w-4 h-4 text-red-400 shrink-0 mr-2" />
                 <select
@@ -260,19 +288,33 @@ const Products = () => {
             <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mr-1">
               <Filter className="w-3.5 h-3.5 text-red-400" /> Filter:
             </span>
+            <button
+              onClick={() => handleCategorySelect("all")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                selectedCategory.toLowerCase() === "all"
+                  ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)] border border-red-400'
+                  : 'bg-[#181a26] text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
+              }`}
+            >
+              All
+            </button>
             {CATEGORIES.map((cat) => {
-              const isSelected = selectedCategory.toLowerCase() === cat.id.toLowerCase();
+              const Icon = CATEGORY_ICONS[cat.id];
+              const isSelected =
+                Boolean(selectedCategory && selectedCategory.toLowerCase() === cat.id.toLowerCase()) ||
+                Boolean(activeMainCategory && activeMainCategory.toLowerCase() === cat.id.toLowerCase());
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategorySelect(cat.id)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     isSelected
                       ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)] border border-red-400'
                       : 'bg-[#181a26] text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
                   }`}
                 >
-                  {cat.label}
+                  {Icon && <Icon size={14} />}
+                  <span>{cat.label}</span>
                 </button>
               );
             })}
@@ -286,6 +328,41 @@ const Products = () => {
               </button>
             )}
           </div>
+
+          {/* Subcategory Pills when main category is selected */}
+          {activeMainCategory && CATEGORY_GROUPS[activeMainCategory] && (
+            <div className="pt-2 border-t border-zinc-800/40 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
+              <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider shrink-0 mr-1">
+                Subcategories:
+              </span>
+              <button
+                onClick={() => handleCategorySelect(activeMainCategory)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer ${
+                  selectedCategory.toLowerCase() === activeMainCategory.toLowerCase()
+                    ? 'bg-red-600/30 text-white border border-red-500/70 shadow-[0_0_10px_rgba(239,68,68,0.3)]'
+                    : 'bg-[#141622] text-zinc-400 hover:text-white border border-zinc-800'
+                }`}
+              >
+                All {activeMainCategory}
+              </button>
+              {CATEGORY_GROUPS[activeMainCategory].map((subSlug) => {
+                const isSubSelected = selectedCategory.toLowerCase() === subSlug.toLowerCase();
+                return (
+                  <button
+                    key={subSlug}
+                    onClick={() => handleCategorySelect(subSlug)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer ${
+                      isSubSelected
+                        ? 'bg-red-600/30 text-white border border-red-500/70 shadow-[0_0_10px_rgba(239,68,68,0.3)]'
+                        : 'bg-[#141622] text-zinc-400 hover:text-white border border-zinc-800'
+                    }`}
+                  >
+                    {subSlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
         </div>
 
@@ -316,7 +393,7 @@ const Products = () => {
             <ShoppingBag className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
             <h3 className="text-lg font-bold text-white">No products found.</h3>
             <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
-              No products matched your search {search ? `"${search}"` : ''} {selectedCategory !== 'all' ? `in ${selectedCategory}` : ''}.
+              No products matched your search {search ? `"${search}"` : ''} {selectedCategory !== 'all' ? `in ${formatCategoryName(selectedCategory)}` : ''}.
             </p>
             <button
               onClick={handleResetFilters}
