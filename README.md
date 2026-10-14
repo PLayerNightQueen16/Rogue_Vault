@@ -398,64 +398,137 @@ Endpoints marked 🔒 require a valid `token` HTTP-only cookie.
 
 ## Deployment Guide
 
-The architecture targets **Render** for the backend and **Vercel** (or Render Static Sites) for the frontend. Adjust provider-specific steps to match your chosen host.
+The production architecture deploys the backend on **Render Web Services**, the frontend on **Vercel**, and the database on **MongoDB Atlas**.
 
-### Backend — Render Web Service
+### 1. Backend — Render Web Service
+
+Deploy `server/` as a Web Service from your connected GitHub repository:
 
 | Setting | Value |
 |---|---|
+| **Name** | `rouge-vault-backend` (or your choice) |
 | **Root Directory** | `server` |
+| **Environment** | `Node` |
 | **Build Command** | `npm install` |
 | **Start Command** | `npm start` |
-| **Environment** | Add all required env vars (see table below) |
 
 **Required environment variables on Render:**
 
-```
-NODE_ENV         = production
-PORT             =             (leave blank — Render injects this automatically)
-dbUrl            = mongodb+srv://...
-JWT_SECRET       = <your-strong-64-hex-char-secret>
-razorpay_id      = rzp_test_...  (or rzp_live_... for production payments)
-razorpay_secret  = <your-razorpay-secret>
-ALLOWED_ORIGINS  = https://your-frontend.vercel.app
-```
+| Variable | Value | Notes |
+|---|---|---|
+| `NODE_ENV` | `production` | Enables production cookie security (`sameSite: 'none'`, `secure: true`) and checks |
+| `dbUrl` | `mongodb+srv://...` | MongoDB Atlas connection string with username, password, and database name |
+| `JWT_SECRET` | `<generated-64-char-hex>` | Cryptographically secure secret (generate with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`) |
+| `razorpay_id` | `rzp_test_...` | Razorpay Key ID (use test mode during staging) |
+| `razorpay_secret` | `<your-razorpay-secret>` | Razorpay Key Secret — **kept strictly on server, never exposed** |
+| `ALLOWED_ORIGINS` | `https://your-app.vercel.app` | Exact URL of the deployed Vercel frontend (no trailing slash, e.g. `https://rouge-vault.vercel.app`) |
 
-> Generate a fresh `JWT_SECRET` for production — do not reuse the development value.
+> ⚠️ **Do not set `PORT` manually** on Render. Render automatically assigns and provides `process.env.PORT` dynamically. The server code defaults to `process.env.PORT || 8000`.
 
-### Frontend — Vercel (or Render Static Site)
+### 2. Frontend — Vercel
+
+Import your repository into Vercel as a new Project:
 
 | Setting | Value |
 |---|---|
+| **Framework Preset** | `Vite` |
 | **Root Directory** | `client` |
 | **Build Command** | `npm run build` |
-| **Output / Publish Directory** | `dist` |
+| **Output Directory** | `dist` |
+| **Install Command** | `npm install` |
 
-**Required environment variable on Vercel:**
+**Required frontend environment variable on Vercel:**
 
+| Variable | Value | Notes |
+|---|---|---|
+| `VITE_API_URL` | `https://your-backend.onrender.com/` | URL of your deployed Render backend. **Preserve the trailing slash `/`** |
+
+> ⚠️ **Important Vercel Rules:**
+> 1. **Vite bundles environment variables at build time:** Any time you add or update `VITE_API_URL` in Vercel's Environment Variables dashboard, you **must trigger a new deployment** (Deployments → Redeploy) for changes to take effect in the client bundle.
+> 2. **SPA Routing Fallback:** The repository includes [`client/vercel.json`](file:///Users/shreyapal/Desktop/shop_kart_mern/client/vercel.json) with rewrite rules (`"source": "/(.*)", "destination": "/index.html"`). This ensures React Router handles deep links and page refreshes on nested routes (e.g., `/products/1`, `/checkout`, `/orders`) without Vercel returning 404 errors.
+
+### 3. MongoDB Atlas Configuration
+
+1. **Network Access:**
+   - Go to MongoDB Atlas → **Network Access** → **IP Access List**.
+   - Add your Render backend's outbound IP addresses, or add `0.0.0.0/0` (Allow access from anywhere) if your Render plan uses dynamic outgoing IPs.
+2. **Database User & Permissions:**
+   - Go to **Database Access** → **Database Users**.
+   - Ensure the user has `readWriteAnyDatabase` or `Read and write to any database` on the application database.
+   - Verify that special characters in the database password are URL-encoded in `dbUrl`.
+
+### 4. Razorpay Payment Gateway
+
+- Keep test credentials (`rzp_test_...`) configured during initial deployment and QA testing.
+- Razorpay webhook / secret credentials (`razorpay_secret`) are strictly used by the backend in `server/controllers/order.controller.js` to verify HMAC SHA256 signatures — never expose them to the frontend.
+- When transitioning to live payments, update `razorpay_id` and `razorpay_secret` on Render and complete Razorpay KYC requirements.
+
+### 5. Authentication & Cookie Compatibility
+
+RØUGE Vault uses **HTTP-only JWT cookies** for user session security:
+
+```javascript
+const cookiesOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+}
 ```
-VITE_API_URL = https://your-backend.onrender.com/
-```
 
-> Must end with a trailing `/`.
+- **In Development:** `sameSite: 'lax'`, `secure: false` allows standard localhost cookie exchange over HTTP.
+- **In Production (`NODE_ENV=production`):** `sameSite: 'none'`, `secure: true` allows cross-origin credentialed requests between the frontend domain (`vercel.app`) and backend domain (`onrender.com`) over HTTPS.
+- **Axios Configuration:** [`client/src/axiosCalls/axios.js`](file:///Users/shreyapal/Desktop/shop_kart_mern/client/src/axiosCalls/axios.js) includes `withCredentials: true` so the browser sends and stores authentication cookies across origins.
+- **CORS Configuration:** [`server/index.js`](file:///Users/shreyapal/Desktop/shop_kart_mern/server/index.js) includes `credentials: true` and validates against `ALLOWED_ORIGINS`.
 
-### MongoDB Atlas configuration
+> ⚠️ **Browser Third-Party Cookie Restrictions Notice:**
+> Modern privacy mechanisms (such as Apple Safari Intelligent Tracking Prevention (ITP) and strict third-party cookie blocking in some Chromium distributions) treat cookies sent between different top-level domains (`*.vercel.app` and `*.onrender.com`) as third-party cookies.
+> 
+> If testing reveals that cookies are dropped by a browser on distinct domains:
+> - **Recommended Production Solution:** Configure custom domains under the same root domain (e.g., `app.yourdomain.com` for frontend on Vercel and `api.yourdomain.com` for backend on Render). This makes cookies first-party / same-site, ensuring 100% browser compatibility.
 
-1. In Atlas → **Network Access**, add the IP addresses of your backend host (or `0.0.0.0/0` for testing; restrict for production).
-2. Ensure the database user in `dbUrl` has **read/write** access to the correct database.
+---
 
-### CORS and credentialed cookies checklist
+## Deployment Checklist
 
-- [ ] `ALLOWED_ORIGINS` on the backend includes the exact deployed frontend URL (e.g. `https://rouge-vault.vercel.app`)
-- [ ] `NODE_ENV=production` on the backend so cookies are set with `secure: true` and `sameSite: 'none'`
-- [ ] Frontend is served over HTTPS (required for `sameSite: 'none'` cookies to be sent)
-- [ ] `VITE_API_URL` points to the backend HTTPS URL
+Follow this exact deployment sequence:
 
-### Razorpay test vs. production
-
-- Use `rzp_test_*` credentials for all testing — no real money is charged.
-- Switch to `rzp_live_*` credentials only when you are ready for real transactions and have completed Razorpay's KYC process.
-- Keep `razorpay_secret` on the backend only. Never expose it to the frontend.
+1. **Local Pre-flight Verification:**
+   - Confirm all backend tests pass: `cd server && npm test`
+   - Confirm frontend production build succeeds: `cd client && npm run build`
+2. **Push to GitHub:**
+   - Commit and push all project changes to the repository's `main` branch.
+3. **Deploy Backend to Render:**
+   - Log into Render (`dashboard.render.com`).
+   - Create a **New Web Service** pointing to your GitHub repo.
+   - Set **Root Directory** to `server`.
+   - Set **Build Command** to `npm install` and **Start Command** to `npm start`.
+   - Add environment variables: `NODE_ENV=production`, `dbUrl`, `JWT_SECRET`, `razorpay_id`, `razorpay_secret`. Leave `ALLOWED_ORIGINS` temporary or empty initially.
+   - Click **Deploy Web Service** and monitor logs for `Server started on port ...` and `DB Connected!`.
+   - Copy your Render backend service URL (e.g. `https://rouge-vault-backend.onrender.com`).
+4. **Deploy Frontend to Vercel:**
+   - Log into Vercel (`vercel.com`).
+   - Import your GitHub repository.
+   - Set **Root Directory** to `client` (Vercel automatically detects the Vite preset).
+   - In **Environment Variables**, add:
+     `VITE_API_URL = https://rouge-vault-backend.onrender.com/` (with trailing slash).
+   - Click **Deploy**.
+   - Copy the generated Vercel production URL (e.g. `https://rouge-vault.vercel.app`).
+5. **Update Render CORS Allowed Origins:**
+   - Return to your Render Web Service dashboard → **Environment**.
+   - Set `ALLOWED_ORIGINS` = `https://rouge-vault.vercel.app` (your exact Vercel frontend URL, no trailing slash).
+   - Save changes (Render will automatically redeploy the service).
+6. **Redeploy Vercel Frontend (if API URL was set after initial build):**
+   - In Vercel → Deployments → click the latest deployment menu → **Redeploy** to ensure the build bundle contains the live Render backend URL.
+7. **End-to-End Production Verification:**
+   - Visit the live Vercel URL in your browser.
+   - **Account:** Register a new user account, log out, and log back in.
+   - **Catalog:** Browse products, test search, and filter by categories.
+   - **Cart & Wishlist:** Add items to cart and wishlist, modify cart quantities, remove items.
+   - **Deep Linking:** Refresh the browser on nested routes (`/products`, `/cart`, `/orders`) to verify `vercel.json` SPA routing works without 404s.
+   - **Checkout & Razorpay:** Proceed to checkout, enter shipping address, open Razorpay test modal, verify test payment completion and order history creation.
+8. **Log Inspection:**
+   - Check the browser DevTools Console and Network tabs for CORS errors or dropped cookies.
+   - Check Render service logs for startup messages, incoming requests, or unhandled errors.
 
 ---
 
