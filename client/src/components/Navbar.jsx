@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Heart, ShoppingBag, User, LogOut, Menu, X, Sparkles, Package, ChevronDown } from 'lucide-react';
 import Logo from './Logo';
@@ -19,6 +19,10 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const userDropdownRef = useRef(null);
+  const categoryDropdownRef = useRef(null);
+  const mobileMenuRef = useRef(null);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -26,6 +30,40 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close dropdowns on click outside or Escape
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target)) {
+        setUserDropdownOpen(false);
+      }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target)) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setUserDropdownOpen(false);
+        setCategoryDropdownOpen(false);
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setUserDropdownOpen(false);
+    setCategoryDropdownOpen(false);
+  }, [location.pathname, location.search]);
 
   // Sync search input if URL has search param
   useEffect(() => {
@@ -120,15 +158,17 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? 'bg-[#050507]/90 backdrop-blur-xl border-b border-red-950/40 shadow-[0_4px_30px_rgba(0,0,0,0.8)] py-3'
-          : 'bg-gradient-to-b from-[#050507]/90 via-[#050507]/60 to-transparent backdrop-blur-md py-4'
+          ? 'bg-[#050507]/90 backdrop-blur-xl border-b border-red-950/40 shadow-[0_4px_30px_rgba(0,0,0,0.8)] py-2.5 sm:py-3'
+          : 'bg-gradient-to-b from-[#050507]/95 via-[#050507]/70 to-transparent backdrop-blur-md py-3 sm:py-4'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           
           {/* Brand Logo on Left */}
-          <Logo size="default" showSubtitle={false} />
+          <div className="shrink-0">
+            <Logo size="default" showSubtitle={false} />
+          </div>
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
@@ -137,6 +177,7 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                 return (
                   <div
                     key="Categories"
+                    ref={categoryDropdownRef}
                     className="relative"
                     onMouseEnter={() => setCategoryDropdownOpen(true)}
                     onMouseLeave={() => setCategoryDropdownOpen(false)}
@@ -144,7 +185,7 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                     <Link
                       to={link.path}
                       onClick={() => setCategoryDropdownOpen(false)}
-                      className="relative px-3.5 py-1.5 text-sm font-medium transition-all duration-200 rounded-lg group text-zinc-300 hover:text-white flex items-center gap-1"
+                      className="relative px-3 py-1.5 text-xs lg:text-sm font-medium transition-all duration-200 rounded-lg group text-zinc-300 hover:text-white flex items-center gap-1"
                     >
                       <span className="relative z-10">{link.name}</span>
                       <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 text-zinc-400 ${categoryDropdownOpen ? 'rotate-180 text-red-400' : ''}`} />
@@ -169,10 +210,10 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                               onClick={() => setCategoryDropdownOpen(false)}
                               className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white hover:bg-red-950/40 transition-colors group/item"
                             >
-                              <div className="w-6 h-6 rounded-lg bg-zinc-900/80 border border-zinc-800 flex items-center justify-center text-red-400 group-hover/item:border-red-500/60 group-hover/item:bg-red-600/20 transition-all">
+                              <div className="w-6 h-6 rounded-lg bg-zinc-900/80 border border-zinc-800 flex items-center justify-center text-red-400 group-hover/item:border-red-500/60 group-hover/item:bg-red-600/20 transition-all shrink-0">
                                 {Icon && <Icon size={14} />}
                               </div>
-                              <span>{groupName}</span>
+                              <span className="truncate">{groupName}</span>
                             </Link>
                           );
                         })}
@@ -187,7 +228,7 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`relative px-3.5 py-1.5 text-sm font-medium transition-all duration-200 rounded-lg group ${
+                  className={`relative px-3 py-1.5 text-xs lg:text-sm font-medium transition-all duration-200 rounded-lg group ${
                     isActive
                       ? 'text-white'
                       : 'text-zinc-300 hover:text-white'
@@ -195,7 +236,7 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                 >
                   <span className="relative z-10">{link.name}</span>
                   {isActive && (
-                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-gradient-to-r from-red-500 to-rose-600 rounded-full shadow-[0_0_8px_#ef4444]" />
+                    <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] bg-gradient-to-r from-red-500 to-rose-600 rounded-full shadow-[0_0_8px_#ef4444]" />
                   )}
                   <span className="absolute inset-0 rounded-lg bg-red-950/0 group-hover:bg-red-950/25 transition-colors -z-0" />
                 </Link>
@@ -204,21 +245,22 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
           </nav>
 
           {/* Right Action Icons & Search */}
-          <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 shrink-0">
             
             {/* Search Bar matching reference image with onSubmit */}
-            <form onSubmit={handleSearchSubmit} className="relative hidden sm:block w-48 md:w-56 lg:w-64">
+            <form onSubmit={handleSearchSubmit} className="relative hidden md:block w-44 lg:w-60">
               <input
                 type="text"
-                placeholder="Search for products..."
+                placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#121218]/80 text-xs text-white placeholder-zinc-500 pl-9 pr-8 py-2 rounded-full border border-red-950/50 focus:border-red-500/80 focus:ring-1 focus:ring-red-500/50 focus:outline-none transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
+                className="w-full bg-[#121218]/80 text-xs text-white placeholder-zinc-500 pl-8 pr-7 py-2 rounded-full border border-red-950/50 focus:border-red-500/80 focus:ring-1 focus:ring-red-500/50 focus:outline-none transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]"
               />
               <button
                 type="submit"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-red-400 transition-colors"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-red-400 transition-colors"
                 title="Search"
+                aria-label="Submit search"
               >
                 <Search className="w-3.5 h-3.5" />
               </button>
@@ -226,7 +268,8 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs"
+                  aria-label="Clear search input"
                 >
                   ×
                 </button>
@@ -237,7 +280,8 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
             <Link
               to="/wishlist"
               title="My Wishlist"
-              className="relative p-2 text-zinc-300 hover:text-red-400 hover:bg-red-950/30 rounded-full transition-all border border-transparent hover:border-red-900/40"
+              aria-label={`Wishlist (${wishlistCount} items)`}
+              className="relative p-2 text-zinc-300 hover:text-red-400 hover:bg-red-950/30 rounded-full transition-all border border-transparent hover:border-red-900/40 min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
               <Heart className="w-4 h-4 sm:w-5 sm:h-5 transition-transform active:scale-90" />
               {wishlistCount > 0 && (
@@ -251,7 +295,8 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
             <Link
               to="/cart"
               title="Cart"
-              className="relative p-2 text-zinc-300 hover:text-red-400 hover:bg-red-950/30 rounded-full transition-all border border-transparent hover:border-red-900/40"
+              aria-label={`Shopping Cart (${totalUnits} items)`}
+              className="relative p-2 text-zinc-300 hover:text-red-400 hover:bg-red-950/30 rounded-full transition-all border border-transparent hover:border-red-900/40 min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
               <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 transition-transform active:scale-90" />
               {totalUnits > 0 && (
@@ -262,10 +307,12 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
             </Link>
 
             {/* User Account / Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={userDropdownRef}>
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="p-2 text-zinc-300 hover:text-red-400 hover:bg-red-950/30 rounded-full transition-all border border-transparent hover:border-red-900/40 flex items-center gap-1.5"
+                aria-expanded={userDropdownOpen}
+                aria-label="User account menu"
+                className="p-2 text-zinc-300 hover:text-red-400 hover:bg-red-950/30 rounded-full transition-all border border-transparent hover:border-red-900/40 min-w-[36px] min-h-[36px] flex items-center justify-center gap-1.5"
                 title="Account"
               >
                 <User className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -278,11 +325,11 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
 
               {/* Account Dropdown */}
               {userDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-52 bg-[#0e1017] border border-red-900/40 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.85)] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 backdrop-blur-xl">
+                <div className="absolute right-0 mt-2 w-52 max-w-[calc(100vw-1.5rem)] bg-[#0e1017] border border-red-900/40 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.85)] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 backdrop-blur-xl">
                   {currentUser ? (
                     <div>
                       <div className="px-3 py-2 border-b border-zinc-800">
-                        <p className="text-xs font-bold text-white">{currentUser.fullName}</p>
+                        <p className="text-xs font-bold text-white truncate">{currentUser.fullName}</p>
                         <p className="text-[11px] text-zinc-400 truncate">{currentUser.email}</p>
                       </div>
                       <div className="py-1">
@@ -291,7 +338,7 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-red-950/40 hover:text-white rounded-lg transition-colors"
                         >
-                          <ShoppingBag className="w-3.5 h-3.5 text-red-400" />
+                          <ShoppingBag className="w-3.5 h-3.5 text-red-400 shrink-0" />
                           <span>My Cart {totalUnits > 0 && `(${totalUnits})`}</span>
                         </Link>
                         <Link
@@ -299,7 +346,7 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-red-950/40 hover:text-white rounded-lg transition-colors"
                         >
-                          <Package className="w-3.5 h-3.5 text-red-400" />
+                          <Package className="w-3.5 h-3.5 text-red-400 shrink-0" />
                           <span>My Orders</span>
                         </Link>
                         <Link
@@ -307,7 +354,7 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-red-950/40 hover:text-white rounded-lg transition-colors"
                         >
-                          <Heart className="w-3.5 h-3.5 text-red-400" />
+                          <Heart className="w-3.5 h-3.5 text-red-400 shrink-0" />
                           <span>My Wishlist {wishlistCount > 0 && `(${wishlistCount})`}</span>
                         </Link>
                         <Link
@@ -315,14 +362,14 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-red-950/40 hover:text-white rounded-lg transition-colors"
                         >
-                          <Sparkles className="w-3.5 h-3.5 text-red-400" />
+                          <Sparkles className="w-3.5 h-3.5 text-red-400 shrink-0" />
                           <span>My VIP Vault</span>
                         </Link>
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-950/50 hover:text-red-300 rounded-lg transition-colors text-left"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-950/50 hover:text-red-300 rounded-lg transition-colors text-left cursor-pointer"
                         >
-                          <LogOut className="w-3.5 h-3.5" />
+                          <LogOut className="w-3.5 h-3.5 shrink-0" />
                           <span>Sign Out</span>
                         </button>
                       </div>
@@ -352,7 +399,9 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors"
+              aria-expanded={mobileMenuOpen}
+              aria-label="Toggle navigation menu"
+              className="md:hidden p-2 text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -360,21 +409,40 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* Mobile Dropdown Menu Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-3 pt-3 border-t border-red-950/60 pb-2 space-y-2">
+          <div
+            ref={mobileMenuRef}
+            className="md:hidden mt-3 pt-3 border-t border-red-950/60 pb-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200"
+          >
+            {/* Mobile Search Bar */}
             <form onSubmit={handleSearchSubmit} className="relative mb-3">
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#121218] text-xs text-white placeholder-zinc-500 pl-9 pr-3.5 py-2.5 rounded-xl border border-red-950/60 focus:outline-none focus:border-red-500/80"
+                className="w-full bg-[#121218] text-xs text-white placeholder-zinc-500 pl-9 pr-8 py-2.5 rounded-xl border border-red-950/60 focus:outline-none focus:border-red-500/80"
               />
-              <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+              <button
+                type="submit"
+                aria-label="Submit search"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+              >
                 <Search className="w-3.5 h-3.5" />
               </button>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear mobile search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs"
+                >
+                  ×
+                </button>
+              )}
             </form>
+
             {navLinks.map((link) => {
               if (link.name === 'Categories') {
                 return (
@@ -382,13 +450,13 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                     <button
                       type="button"
                       onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-red-950/30 transition-colors"
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-zinc-300 hover:text-white hover:bg-red-950/30 transition-colors cursor-pointer"
                     >
                       <span>Categories</span>
                       <ChevronDown className={`w-4 h-4 transition-transform text-zinc-400 ${categoryDropdownOpen ? 'rotate-180 text-red-400' : ''}`} />
                     </button>
                     {categoryDropdownOpen && (
-                      <div className="pl-3 pr-2 py-1 space-y-1 bg-black/40 rounded-xl border border-red-950/40">
+                      <div className="pl-3 pr-2 py-1.5 space-y-1 bg-black/50 rounded-xl border border-red-950/40">
                         {Object.keys(CATEGORY_GROUPS).map((groupName) => {
                           const Icon = CATEGORY_ICONS[groupName];
                           return (
@@ -401,8 +469,8 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                               }}
                               className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-red-950/40 transition-colors"
                             >
-                              {Icon && <Icon size={14} className="text-red-400" />}
-                              <span>{groupName}</span>
+                              {Icon && <Icon size={14} className="text-red-400 shrink-0" />}
+                              <span className="truncate">{groupName}</span>
                             </Link>
                           );
                         })}
@@ -412,12 +480,17 @@ function Navbar({ wishlistCount: initialWishlistCount = 0 }) {
                 );
               }
 
+              const isActive = location.pathname === link.path && !location.hash;
               return (
                 <Link
                   key={link.name}
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-red-950/30 transition-colors"
+                  className={`block px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-red-950/50 text-white border border-red-500/30'
+                      : 'text-zinc-300 hover:text-white hover:bg-red-950/30'
+                  }`}
                 >
                   {link.name}
                 </Link>

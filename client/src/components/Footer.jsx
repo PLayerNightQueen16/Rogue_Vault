@@ -9,11 +9,11 @@ function Footer() {
       {/* Red ambient top glow */}
       <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-10 sm:py-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10">
           
           {/* Brand Info */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="sm:col-span-2 space-y-4">
             <Logo size="lg" showSubtitle={true} />
             <p className="text-zinc-400 text-xs leading-relaxed max-w-sm mt-3">
               RØUGE VAULT is a premier luxury destination curating cutting-edge aesthetics, streetwear, high-performance audio, and rare horology with unmatched vault privileges.
@@ -56,7 +56,7 @@ function Footer() {
           </div>
 
           {/* Newsletter Subscribe */}
-          <div className="space-y-3">
+          <div className="space-y-3 sm:col-span-2 lg:col-span-1">
             <h4 className="text-white font-bold tracking-wider uppercase font-['Cinzel',serif]">VIP Access</h4>
             <p className="text-zinc-400 text-xs">
               Subscribe for private vault drops and surprise discount codes.
@@ -68,8 +68,9 @@ function Footer() {
                 className="w-full bg-[#121218] border border-red-950/60 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/80"
               />
               <button
-                className="p-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)] hover:scale-105 transition-all"
+                className="p-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)] hover:scale-105 transition-all cursor-pointer"
                 title="Subscribe"
+                aria-label="Subscribe to VIP Access"
               >
                 <ArrowRight className="w-4 h-4" />
               </button>
@@ -83,9 +84,9 @@ function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-6 border-t border-zinc-900/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-zinc-500 text-[11px]">
+        <div className="mt-10 sm:mt-12 pt-6 border-t border-zinc-900/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-zinc-500 text-[11px] text-center sm:text-left">
           <p>© {new Date().getFullYear()} RØUGE VAULT Inc. All rights reserved.</p>
-          <p className="flex items-center gap-1.5">
+          <p className="flex items-center gap-1.5 justify-center">
             <Lock className="w-3 h-3 text-red-500" />
             <span>Secured with 256-bit Vault Encryption</span>
           </p>

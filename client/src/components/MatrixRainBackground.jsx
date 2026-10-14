@@ -46,17 +46,28 @@ function MatrixRainBackground({ opacity = 0.65, speedMultiplier = 1 }) {
       '85% OFF'
     ];
 
+    // Check reduced motion preference
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      // Draw subtle ambient static pattern and return
+      ctx.fillStyle = 'rgba(5, 5, 7, 0.9)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    // Responsive columns
-    const columnCount = Math.floor(width / 32);
+    // Responsive columns spacing - wider spacing on mobile (<640px) to conserve GPU
+    const isMobile = width < 640;
+    const colSpacing = isMobile ? 44 : 32;
+    const columnCount = Math.floor(width / colSpacing);
     const columns = [];
 
     // Initialize columns with randomized sizes, speeds, and word sequences
     for (let i = 0; i < columnCount; i++) {
       columns.push({
-        x: i * 32 + (Math.random() * 8 - 4),
+        x: i * colSpacing + (Math.random() * 8 - 4),
         y: Math.random() * -height * 1.5,
         speed: (Math.random() * 1.5 + 0.6) * speedMultiplier,
         fontSize: Math.floor(Math.random() * 11) + 10, // 10px to 20px
@@ -73,10 +84,11 @@ function MatrixRainBackground({ opacity = 0.65, speedMultiplier = 1 }) {
     const handleResize = () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
-      const newCount = Math.floor(width / 32);
+      const spacing = width < 640 ? 44 : 32;
+      const newCount = Math.floor(width / spacing);
       while (columns.length < newCount) {
         columns.push({
-          x: columns.length * 32,
+          x: columns.length * spacing,
           y: Math.random() * -height,
           speed: (Math.random() * 1.5 + 0.6) * speedMultiplier,
           fontSize: Math.floor(Math.random() * 11) + 10,
@@ -98,6 +110,8 @@ function MatrixRainBackground({ opacity = 0.65, speedMultiplier = 1 }) {
       ctx.fillStyle = 'rgba(5, 5, 7, 0.16)';
       ctx.fillRect(0, 0, width, height);
 
+      const enableGlow = width >= 640;
+
       // Render matrix streams
       for (let i = 0; i < columns.length; i++) {
         const col = columns[i];
@@ -110,12 +124,16 @@ function MatrixRainBackground({ opacity = 0.65, speedMultiplier = 1 }) {
         // Glow color styling
         if (col.layer === 'front') {
           // Bright leading head character with crimson neon glow
-          ctx.shadowColor = '#ff2b4f';
-          ctx.shadowBlur = 10;
+          if (enableGlow) {
+            ctx.shadowColor = '#ff2b4f';
+            ctx.shadowBlur = 8;
+          }
           ctx.fillStyle = '#ff8fa3';
         } else {
-          ctx.shadowColor = '#e11d48';
-          ctx.shadowBlur = 4;
+          if (enableGlow) {
+            ctx.shadowColor = '#e11d48';
+            ctx.shadowBlur = 3;
+          }
           ctx.fillStyle = `rgba(239, 68, 68, ${col.opacity})`;
         }
 

@@ -25,24 +25,24 @@ function HeroSection() {
 
             {/* Main Headline matching reference */}
             <div className="space-y-1 sm:space-y-2">
-              <h1 className="text-4xl sm:text-6xl xl:text-7xl font-['Cinzel',serif] font-black tracking-tight text-white uppercase drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+              <h1 className="text-3xl xs:text-4xl sm:text-6xl xl:text-7xl font-['Cinzel',serif] font-black tracking-tight text-white uppercase drop-shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
                 SHOP
               </h1>
-              <div className="text-3xl sm:text-5xl xl:text-6xl font-['Cinzel',serif] font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-500 to-red-600 drop-shadow-[0_0_35px_rgba(239,68,68,0.6)] uppercase">
+              <div className="text-2xl xs:text-3xl sm:text-5xl xl:text-6xl font-['Cinzel',serif] font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-500 to-red-600 drop-shadow-[0_0_35px_rgba(239,68,68,0.6)] uppercase">
                 BEYOND ORDINARY
               </div>
             </div>
 
             {/* Subtitle */}
-            <p className="text-sm sm:text-base md:text-lg text-zinc-300 max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
+            <p className="text-xs xs:text-sm sm:text-base md:text-lg text-zinc-300 max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
               Premium products. Unbeatable deals. Your style, your way.
             </p>
 
-            {/* CTA Button matching reference image */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+            {/* CTA Buttons */}
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4">
               <a
                 href="#trending"
-                className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-red-600 text-white font-bold text-sm tracking-wider uppercase shadow-[0_0_25px_rgba(239,68,68,0.6)] hover:shadow-[0_0_40px_rgba(239,68,68,0.9)] hover:scale-105 active:scale-95 transition-all duration-500 overflow-hidden"
+                className="group relative inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-red-600 text-white font-bold text-xs sm:text-sm tracking-wider uppercase shadow-[0_0_25px_rgba(239,68,68,0.6)] hover:shadow-[0_0_40px_rgba(239,68,68,0.9)] hover:scale-105 active:scale-95 transition-all duration-500 overflow-hidden text-center"
               >
                 {/* Glow sheen animation */}
                 <div className="absolute inset-0 w-1/2 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1200 ease-out pointer-events-none" />
@@ -52,17 +52,17 @@ function HeroSection() {
 
               <a
                 href="#categories"
-                className="px-6 py-3.5 rounded-full bg-[#121218]/80 hover:bg-[#1a1a24] text-zinc-300 hover:text-white border border-red-950/60 hover:border-red-500/40 text-xs font-semibold tracking-wider uppercase transition-all duration-300 backdrop-blur-md"
+                className="px-6 py-3.5 rounded-full bg-[#121218]/80 hover:bg-[#1a1a24] text-zinc-300 hover:text-white border border-red-950/60 hover:border-red-500/40 text-xs font-semibold tracking-wider uppercase transition-all duration-300 backdrop-blur-md text-center"
               >
                 Explore Vault
               </a>
             </div>
 
-            {/* Trust Badges row matching reference */}
-            <div className="pt-8 border-t border-red-950/40 grid grid-cols-3 gap-2 sm:gap-4 text-left">
+            {/* Trust Badges row */}
+            <div className="pt-6 sm:pt-8 border-t border-red-950/40 grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-3 sm:gap-4 text-left">
               
               {/* Badge 1: Free Shipping */}
-              <div className="flex items-start gap-2.5">
+              <div className="flex items-center xs:items-start gap-2.5">
                 <div className="p-2 rounded-lg bg-red-950/40 border border-red-900/30 text-red-400 shrink-0">
                   <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
@@ -73,7 +73,7 @@ function HeroSection() {
               </div>
 
               {/* Badge 2: Secure Payment */}
-              <div className="flex items-start gap-2.5">
+              <div className="flex items-center xs:items-start gap-2.5">
                 <div className="p-2 rounded-lg bg-red-950/40 border border-red-900/30 text-red-400 shrink-0">
                   <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
@@ -84,7 +84,7 @@ function HeroSection() {
               </div>
 
               {/* Badge 3: Easy Returns */}
-              <div className="flex items-start gap-2.5">
+              <div className="flex items-center xs:items-start gap-2.5">
                 <div className="p-2 rounded-lg bg-red-950/40 border border-red-900/30 text-red-400 shrink-0">
                   <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>

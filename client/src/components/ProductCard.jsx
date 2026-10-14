@@ -225,16 +225,16 @@ function ProductCard({ product, onAddToCart, onQuickView, isWishlisted: initialW
       </div>
 
       {/* Product Details */}
-      <div className="p-3.5 sm:p-4 flex flex-col flex-grow justify-between bg-gradient-to-b from-[#0d0f17] to-[#090b10]">
+      <div className="p-2.5 sm:p-4 flex flex-col flex-grow justify-between bg-gradient-to-b from-[#0d0f17] to-[#090b10]">
 
         <div>
           {/* Category & Rating */}
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <span className="text-[10px] font-bold tracking-wider text-red-400/90 uppercase truncate">
+          <div className="flex items-center justify-between gap-1.5 mb-1 sm:mb-1.5">
+            <span className="text-[9px] sm:text-[10px] font-bold tracking-wider text-red-400/90 uppercase truncate">
               {product.category}
             </span>
-            <div className="flex items-center gap-1 text-[11px] text-amber-400 shrink-0">
-              <Star className="w-3 h-3 fill-amber-400" />
+            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-amber-400 shrink-0">
+              <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400" />
               <span className="font-semibold text-zinc-300">{displayRating}</span>
               <span className="text-[10px] text-zinc-500 hidden sm:inline">({displayReviews})</span>
             </div>
@@ -247,43 +247,44 @@ function ProductCard({ product, onAddToCart, onQuickView, isWishlisted: initialW
         </div>
 
         {/* Price & Action Row */}
-        <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-zinc-800/80 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-sm sm:text-base font-bold text-white font-['Space_Grotesk',sans-serif]">
+        <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-1 flex-wrap xs:flex-nowrap">
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs xs:text-sm sm:text-base font-bold text-white font-['Space_Grotesk',sans-serif] truncate">
               {displayPrice}
             </span>
             {displayOriginalPrice && (
-              <span className="text-[10px] sm:text-xs text-zinc-500 line-through">
+              <span className="text-[9px] sm:text-xs text-zinc-500 line-through truncate">
                 {displayOriginalPrice}
               </span>
             )}
           </div>
 
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={handleAdd}
               disabled={isAddingToCart}
-              className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${isAdded
+              className={`px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap min-h-[32px] sm:min-h-[36px] ${isAdded
                   ? 'bg-emerald-600 text-white shadow-[0_0_12px_rgba(16,185,129,0.5)]'
                   : isAddingToCart
                     ? 'bg-red-900/80 text-white opacity-80 cursor-wait'
                     : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.4)] active:scale-95'
                 }`}
               title="Add to Vault Cart"
+              aria-label={`Add ${product.name} to Cart`}
             >
               {isAddingToCart ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-                  <span>Adding</span>
+                  <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin text-white" />
+                  <span className="hidden xs:inline">Adding</span>
                 </>
               ) : isAdded ? (
                 <>
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   <span>Added!</span>
                 </>
               ) : (
                 <>
-                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   <span>Add</span>
                 </>
               )}

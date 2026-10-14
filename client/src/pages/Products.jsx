@@ -179,10 +179,10 @@ const Products = () => {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
         
         {/* Page Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
             <p className="text-red-400 text-xs tracking-[0.25em] uppercase font-bold">
@@ -190,9 +190,9 @@ const Products = () => {
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4">
             <div>
-              <h1 className="text-3xl sm:text-5xl font-['Cinzel',serif] font-black tracking-tight text-white uppercase">
+              <h1 className="text-2xl xs:text-3xl sm:text-5xl font-['Cinzel',serif] font-black tracking-tight text-white uppercase">
                 Discover All Vault Pieces
               </h1>
               <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-xl">
@@ -201,7 +201,7 @@ const Products = () => {
             </div>
 
             {/* Total Results Count */}
-            <div className="text-xs font-semibold text-zinc-400 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full self-start md:self-auto">
+            <div className="text-xs font-semibold text-zinc-400 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full self-start md:self-auto shrink-0">
               {loading ? (
                 <span className="flex items-center gap-1.5 text-red-400">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching...
@@ -214,25 +214,26 @@ const Products = () => {
         </div>
 
         {/* Search & Filter Controls Bar */}
-        <div className="bg-[#0d0f17]/90 border border-red-950/50 rounded-2xl p-4 sm:p-5 mb-8 shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-xl space-y-4">
+        <div className="bg-[#0d0f17]/90 border border-red-950/50 rounded-2xl p-3 sm:p-5 mb-6 sm:mb-8 shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-xl space-y-3 sm:space-y-4">
           
-          <div className="flex flex-col md:flex-row items-center gap-3">
+          <div className="flex flex-col md:flex-row items-center gap-2.5 sm:gap-3">
             {/* Search Input Box */}
             <div className="relative flex-1 w-full">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={search}
                 onChange={handleSearchChange}
                 placeholder="Search products by name..."
-                className="w-full bg-[#141722]/80 border border-red-950/60 rounded-xl pl-11 pr-10 py-3 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                className="w-full bg-[#141722]/80 border border-red-950/60 rounded-xl pl-10 pr-9 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
               />
               {search && (
                 <button
                   type="button"
                   onClick={handleClearSearch}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-white rounded-full bg-zinc-800/80 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-white rounded-full bg-zinc-800/80 transition-colors cursor-pointer"
                   title="Clear search"
+                  aria-label="Clear search input"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -247,6 +248,7 @@ const Products = () => {
                   value={selectedCategory}
                   onChange={(e) => handleCategorySelect(e.target.value)}
                   className="w-full bg-transparent text-xs text-zinc-200 py-1.5 focus:outline-none cursor-pointer"
+                  aria-label="Filter by category"
                 >
                   <option value="all" className="bg-[#12141e] text-white">All Categories</option>
                   {Object.keys(CATEGORY_GROUPS).map((groupName) => (
@@ -273,6 +275,7 @@ const Products = () => {
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-full bg-transparent text-xs text-zinc-200 py-1.5 focus:outline-none cursor-pointer"
+                  aria-label="Sort products"
                 >
                   <option value="default" className="bg-[#12141e] text-white">Sort: Featured</option>
                   <option value="price-low" className="bg-[#12141e] text-white">Price: Low to High (₹)</option>
@@ -284,13 +287,13 @@ const Products = () => {
           </div>
 
           {/* Category Filter Pills */}
-          <div className="pt-2 border-t border-zinc-800/60 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          <div className="pt-2 border-t border-zinc-800/60 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 touch-pan-x">
             <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1 shrink-0 mr-1">
               <Filter className="w-3.5 h-3.5 text-red-400" /> Filter:
             </span>
             <button
               onClick={() => handleCategorySelect("all")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                 selectedCategory.toLowerCase() === "all"
                   ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)] border border-red-400'
                   : 'bg-[#181a26] text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
@@ -307,13 +310,13 @@ const Products = () => {
                 <button
                   key={cat.id}
                   onClick={() => handleCategorySelect(cat.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     isSelected
                       ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)] border border-red-400'
                       : 'bg-[#181a26] text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-800'
                   }`}
                 >
-                  {Icon && <Icon size={14} />}
+                  {Icon && <Icon size={13} />}
                   <span>{cat.label}</span>
                 </button>
               );
@@ -322,7 +325,7 @@ const Products = () => {
             {(search || selectedCategory !== 'all' || sortBy !== 'default') && (
               <button
                 onClick={handleResetFilters}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/40 border border-red-900/40 transition-colors shrink-0 ml-auto"
+                className="px-2.5 py-1 rounded-full text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/40 border border-red-900/40 transition-colors shrink-0 ml-auto cursor-pointer"
               >
                 Reset All
               </button>
@@ -331,7 +334,7 @@ const Products = () => {
 
           {/* Subcategory Pills when main category is selected */}
           {activeMainCategory && CATEGORY_GROUPS[activeMainCategory] && (
-            <div className="pt-2 border-t border-zinc-800/40 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
+            <div className="pt-2 border-t border-zinc-800/40 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs touch-pan-x">
               <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider shrink-0 mr-1">
                 Subcategories:
               </span>
@@ -406,7 +409,7 @@ const Products = () => {
 
         {/* Product Cards Grid */}
         {!loading && !error && sortedProducts.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {sortedProducts.map((product) => {
               const pId = (product._id || product.id)?.toString();
               return (

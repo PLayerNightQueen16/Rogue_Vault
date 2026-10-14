@@ -26,7 +26,7 @@ function App() {
         <div className="relative z-10 min-h-screen flex flex-col bg-transparent text-white font-['Outfit',sans-serif]">
           <Navbar />
 
-          <main className="flex-grow pt-32 sm:pt-36 flex flex-col">
+          <main className="flex-grow pt-16 sm:pt-20 md:pt-24 flex flex-col">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/register" element={<Register />} />
